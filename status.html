@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Status notulen · Opgepend</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖊️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FBF8F3;--card:#FFF;--ink:#1D2433;--muted:#5F6878;--line:#E8E2D8;--accent:#2F5BEA;--accent-ink:#FFF;--soft:#EEF2FE;--ok:#1F8A4C}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12151C;--card:#1A1F29;--ink:#ECEFF4;--muted:#A3ACBA;--line:#2A3140;--accent:#7C9CFF;--accent-ink:#0E1220;--soft:#1E2742;--ok:#5CC28A}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Inter,system-ui,sans-serif}
+  .wrap{max-width:620px;margin:0 auto;padding:24px 20px 60px}
+  .logo{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:24px;color:var(--ink);text-decoration:none}
+  .logo em{color:var(--accent);font-style:normal}
+  h1{font-family:Fraunces,Georgia,serif;font-size:32px;line-height:1.2;margin:28px 0 6px;font-variant-numeric:lining-nums}
+  .muted{color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;animation:up .5s ease}
+  @keyframes up{from{opacity:0;transform:translateY(12px)}}
+  .steps{position:relative;margin:6px 0 0;padding:0;list-style:none}
+  .steps li{position:relative;padding:0 0 26px 46px}
+  .steps li:last-child{padding-bottom:0}
+  .steps li::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:2px;background:var(--line)}
+  .steps li:last-child::before{display:none}
+  .steps li.done::before{background:var(--accent)}
+  .dot{position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:2px solid var(--line);font-size:14px;transition:all .4s}
+  .done .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .now .dot{border-color:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 50%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+  .steps b{display:block}
+  .file{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;text-decoration:none;color:var(--ink);transition:border-color .2s,transform .2s}
+  .file:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .file span:last-child{margin-left:auto;color:var(--accent);font-weight:600}
+  .err{color:#C2413B}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="logo" href="/">Opge<em>pend</em></a>
+  <div id="out"><p class="muted" style="margin-top:28px">Status ophalen…</p></div>
+</div>
+<script>
+const API = "https://opgepend-upload.opgepend.workers.dev";
+const q = new URLSearchParams(location.search), out = document.getElementById("out");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dt = s => s ? new Date(s).toLocaleString("nl-NL", {weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+fetch(`${API}/status?o=${encodeURIComponent(q.get("o")||"")}&t=${encodeURIComponent(q.get("t")||"")}`)
+  .then(r => r.json()).then(s => {
+    if (s.error) { out.innerHTML = `<h1>Oeps</h1><p class="err">${esc(s.error)}</p>`; return; }
+    const i = ["nieuw","bezig","klaar"].indexOf(s.status);
+    const st = [["Opname ontvangen", dt(s.ontvangen)], ["We schrijven je notulen", i >= 1 ? "Een mens leest alles na" : "Start meestal binnen een paar uur"], ["Klaar om te downloaden", s.klaar_op ? dt(s.klaar_op) : "Binnen 24 uur"]];
+    out.innerHTML = `<h1>Notulen ${esc(s.vereniging)}</h1><p class="muted">${s.datum ? "Vergadering van " + esc(new Date(s.datum).toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})) : ""}</p>
+      <div class="card"><ul class="steps">${st.map((x, n) => `<li class="${n < i || (n === i && i === 2) ? "done" : n === i ? "now done" : ""}"><span class="dot">${n < i || i === 2 ? "✓" : n + 1}</span><b>${x[0]}</b><span class="muted">${esc(x[1])}</span></li>`).join("")}</ul></div>
+      ${s.bestanden.length ? `<div class="card"><b>Je notulen</b>${s.bestanden.map(b => `<a class="file" href="${b.url}"><span>📄</span><span>${esc(b.naam)}</span><span>Downloaden</span></a>`).join("")}<p class="muted" style="font-size:14px;margin:12px 0 0">Iets aanpassen? Mail ons op <a href="mailto:info@opgepend.nl">info@opgepend.nl</a>.</p></div>` :
+        `<p class="muted" style="margin-top:18px;font-size:15px">Bewaar deze pagina: zodra je notulen klaar zijn, kun je ze hier downloaden.</p>`}`;
+  }).catch(() => out.innerHTML = `<p class="err" style="margin-top:28px">Kon de status niet ophalen. Probeer het later opnieuw of mail info@opgepend.nl.</p>`);
+</script>
+</body>
+</html>

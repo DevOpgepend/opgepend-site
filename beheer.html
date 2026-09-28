@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard · Opgepend</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖊️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FBF8F3;--card:#FFF;--ink:#1D2433;--muted:#5F6878;--line:#E8E2D8;--accent:#2F5BEA;--accent-ink:#FFF;--soft:#EEF2FE;--ok:#1F8A4C;--warn:#B7791F;--err:#C2413B}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#12151C;--card:#1A1F29;--ink:#ECEFF4;--muted:#A3ACBA;--line:#2A3140;--accent:#7C9CFF;--accent-ink:#0E1220;--soft:#1E2742;--ok:#5CC28A;--warn:#E7A64A;--err:#EA7B74}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 16px 60px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .logo{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:22px}
+  .logo em{color:var(--accent);font-style:normal}
+  h1{font-family:Fraunces,Georgia,serif;font-size:28px;margin:22px 0 4px;font-variant-numeric:lining-nums}
+  .muted{color:var(--muted)}
+  button,.btn{font:600 14px Inter,sans-serif;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,transform .15s}
+  button:hover,.btn:hover{border-color:var(--accent)}
+  button:active{transform:scale(.97)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  input,select,textarea{font:15px Inter,sans-serif;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px}
+  .login{max-width:360px;margin:80px auto;text-align:center}
+  .login input{width:100%;margin:14px 0 10px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .stat b{display:block;font-size:24px;font-family:Fraunces,Georgia,serif;font-variant-numeric:lining-nums}
+  .stat span{font-size:13px;color:var(--muted)}
+  .tools{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 6px}
+  .tools input{flex:1 1 180px}
+  .order{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px;animation:up .35s ease}
+  @keyframes up{from{opacity:0;transform:translateY(8px)}}
+  .order .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+  .order h3{margin:0;font-size:18px}
+  .pill{font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--soft);color:var(--accent);white-space:nowrap}
+  .pill.nieuw{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .pill.klaar{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .pill.geld{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .pill.open{background:color-mix(in srgb,var(--err) 15%,transparent);color:var(--err)}
+  .meta{font-size:14px;color:var(--muted);margin:6px 0 10px}
+  .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .files{font-size:14px;margin-top:8px}
+  .files span{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:3px 8px;margin:2px 4px 2px 0}
+  textarea{width:100%;min-height:42px;margin-top:10px;resize:vertical}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;transition:transform .3s;z-index:9}
+  .toast.on{transform:translateX(-50%)}
+  .empty{text-align:center;color:var(--muted);padding:40px 0}
+  @media (max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><span class="logo">Opge<em>pend</em> · dashboard</span><button id="logout" hidden>Uitloggen</button></header>
+
+  <div class="login" id="login">
+    <h1>Inloggen</h1>
+    <p class="muted">Alleen voor de eigenaar van Opgepend.</p>
+    <form id="lf"><input type="password" id="pw" placeholder="Wachtwoord" autocomplete="current-password"><button class="primary" style="width:100%;justify-content:center">Inloggen</button></form>
+    <p id="lerr" style="color:var(--err)"></p>
+  </div>
+
+  <div id="app" hidden>
+    <h1>Opdrachten</h1>
+    <p class="muted" id="hint"></p>
+    <div class="stats" id="stats"></div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Zoek vereniging, naam of e-mail">
+      <select id="fs"><option value="">Alle statussen</option><option value="nieuw">Nieuw</option><option value="bezig">Bezig</option><option value="klaar">Klaar</option></select>
+      <select id="fb"><option value="">Betaald en open</option><option value="open">Nog niet betaald</option><option value="ja">Betaald</option></select>
+      <button id="reload">↻ Vernieuwen</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://opgepend-upload.opgepend.workers.dev";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dt = s => s ? new Date(s).toLocaleString("nl-NL", {day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"}) : "";
+let PW = "", DATA = {orders: []};
+try { PW = sessionStorage.getItem("op_pw") || ""; } catch (e) {}
+const toast = t => { $("toast").textContent = t; $("toast").classList.add("on"); setTimeout(() => $("toast").classList.remove("on"), 2600); };
+
+async function api(method, path, body, ct = "application/json") {
+  const r = await fetch(API + path, {method, headers: {"Authorization": "Bearer " + PW, "Content-Type": ct}, body});
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { logout(); throw new Error("Wachtwoord klopt niet"); }
+  if (!r.ok || j.error) throw new Error(j.error || "Mislukt");
+  return j;
+}
+function logout(){ PW = ""; try { sessionStorage.removeItem("op_pw"); } catch (e) {} $("app").hidden = true; $("login").hidden = false; $("logout").hidden = true; }
+async function load(){
+  DATA = await api("GET", "/admin/orders");
+  $("login").hidden = true; $("app").hidden = false; $("logout").hidden = false;
+  $("hint").textContent = DATA.klantmail ? "Klanten krijgen automatisch een mail als je een opdracht op 'klaar' zet."
+    : "Klantmails staan nog uit (eigen maildomein nog niet gekoppeld). Kopieer de statuslink en stuur die zelf naar de klant.";
+  render();
+}
+function render(){
+  const O = DATA.orders, q = $("q").value.toLowerCase(), fs = $("fs").value, fb = $("fb").value;
+  const n = s => O.filter(o => o.status === s).length;
+  $("stats").innerHTML = [["Nieuw", n("nieuw")], ["Bezig", n("bezig")], ["Klaar", n("klaar")], ["Nog te betalen", O.filter(o => o.status === "klaar" && !o.betaald).length]]
+    .map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+  const L = O.filter(o => (!fs || o.status === fs) && (!fb || (fb === "ja") === !!o.betaald)
+    && (!q || [o.vereniging, o.naam, o.email].join(" ").toLowerCase().includes(q)));
+  $("list").innerHTML = L.length ? L.map(o => `
+    <div class="order" data-id="${o.id}">
+      <div class="top"><div><h3>${esc(o.vereniging)}</h3><div class="meta">${esc(o.naam)} · <a href="mailto:${esc(o.email)}">${esc(o.email)}</a> · ontvangen ${dt(o.ts)}${o.datum ? " · vergadering " + esc(o.datum) : ""}</div></div>
+        <div class="row" style="margin:0"><span class="pill ${o.status}">${o.status}</span><span class="pill ${o.betaald ? "geld" : "open"}">${o.betaald ? "betaald" : "niet betaald"}</span></div></div>
+      ${o.opmerking ? `<div class="meta">💬 ${esc(o.opmerking)}</div>` : ""}
+      <div class="row">
+        ${o.opname_url ? `<a class="btn" href="${o.opname_url}">⬇️ Opname (${(o.grootte / 1048576).toFixed(1)} MB)</a>` : o.link ? `<a class="btn" href="${esc(o.link)}" target="_blank" rel="noopener">🔗 Link van klant</a>` : `<span class="muted" style="font-size:14px">Opname verwijderd (30 dagen)</span>`}
+        <label class="btn">📤 Notulen uploaden<input type="file" hidden data-up="${o.id}"></label>
+        <select data-st="${o.id}">${["nieuw","bezig","klaar"].map(s => `<option ${s === o.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+        <button data-pay="${o.id}">${o.betaald ? "↩️ Onbetaald" : "💶 Betaald"}</button>
+        <button data-copy="${esc(o.status_url)}">🔗 Statuslink</button>
+      </div>
+      <div class="files">${o.notulen.length ? "Notulen: " + o.notulen.map(n => `<span>📄 ${esc(n.naam)}</span>`).join("") : '<span class="muted">Nog geen notulen geüpload</span>'}</div>
+      <textarea data-note="${o.id}" placeholder="Notitie voor jezelf (bijv. factuurnummer)">${esc(o.notitie)}</textarea>
+    </div>`).join("") : `<div class="empty">Geen opdrachten${O.length ? " met deze filters" : " (nog)"}.</div>`;
+}
+async function update(id, body, msg, rerender = true){
+  const j = await api("POST", "/admin/order/" + id, JSON.stringify(body));
+  DATA.orders = DATA.orders.map(o => o.id === id ? {...o, ...j.order, status_url: o.status_url, opname_url: o.opname_url} : o);
+  if (rerender) render(); toast(msg + (j.gemaild ? " · klant gemaild" : ""));
+}
+$("lf").addEventListener("submit", async e => { e.preventDefault(); PW = $("pw").value; $("lerr").textContent = "";
+  try { await load(); try { sessionStorage.setItem("op_pw", PW); } catch (e) {} } catch (err) { $("lerr").textContent = err.message; } });
+$("logout").addEventListener("click", logout);
+$("reload").addEventListener("click", () => load().then(() => toast("Bijgewerkt")).catch(e => toast(e.message)));
+["q","fs","fb"].forEach(id => $(id).addEventListener("input", render));
+$("list").addEventListener("change", async e => {
+  const t = e.target;
+  try {
+    if (t.dataset.st) {
+      if (t.value === "klaar" && !DATA.orders.find(o => o.id === t.dataset.st).notulen.length && !confirm("Er zijn nog geen notulen geüpload. Toch op klaar zetten?")) { render(); return; }
+      await update(t.dataset.st, {status: t.value}, "Status: " + t.value);
+    }
+    if (t.dataset.up && t.files[0]) {
+      const f = t.files[0]; toast("Uploaden…");
+      const j = await api("PUT", `/admin/notulen/${t.dataset.up}?naam=${encodeURIComponent(f.name)}`, f, f.type || "application/octet-stream");
+      DATA.orders = DATA.orders.map(o => o.id === j.order.id ? {...o, notulen: j.order.notulen} : o); render(); toast("Notulen geüpload: " + f.name);
+    }
+  } catch (err) { toast(err.message); }
+});
+$("list").addEventListener("click", async e => {
+  const t = e.target.closest("button"); if (!t) return;
+  try {
+    if (t.dataset.pay) { const o = DATA.orders.find(x => x.id === t.dataset.pay); await update(o.id, {betaald: !o.betaald}, o.betaald ? "Op onbetaald gezet" : "Betaald ✓"); }
+    if (t.dataset.copy) { await navigator.clipboard.writeText(t.dataset.copy); toast("Statuslink gekopieerd"); }
+  } catch (err) { toast(err.message); }
+});
+let noteTimer; $("list").addEventListener("input", e => { const t = e.target; if (!t.dataset.note) return;
+  clearTimeout(noteTimer); noteTimer = setTimeout(() => update(t.dataset.note, {notitie: t.value}, "Notitie opgeslagen", false).catch(err => toast(err.message)), 900); });
+if (PW) load().catch(() => logout());
+</script>
+</body>
+</html>

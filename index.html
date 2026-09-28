@@ -371,6 +371,7 @@
         <svg class="check" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34"/><path d="M25 41l10 10 20-22"/></svg>
         <h3 style="margin-top:12px">Ontvangen, dank je!</h3>
         <p class="muted">We gaan ermee aan de slag. Binnen 24 uur krijg je de notulen op <b id="doneemail"></b>.</p>
+        <p id="statuswrap" hidden><a class="btn" id="statuslink" href="#">Volg de status van je notulen</a><br><span class="muted" style="font-size:14px">Bewaar deze link: daar download je straks ook je notulen.</span></p>
       </div>
     </form>
   </div>
@@ -498,7 +499,7 @@ $("form").addEventListener("submit", async e => {
       const link = (f.get("link") || "").trim();
       if (!/^https?:\/\/\S+$/i.test(link)) throw new Error("Plak een geldige link (begint met https://).");
       btn.textContent = "Versturen…";
-      await post("/link", {...meta, link});
+      var res = await post("/link", {...meta, link});
     } else {
       if (!file) throw new Error("Kies eerst een opname, of stuur een downloadlink.");
       btn.textContent = "Bezig met uploaden…"; $("progress").classList.add("on"); setProgress(0, file.size);
@@ -515,9 +516,10 @@ $("form").addEventListener("submit", async e => {
         parts.push(part); sent += blob.size; setProgress(sent, file.size);
       }
       $("ptext").textContent = "Afronden…";
-      await post("/klaar", {key:s.key, uploadId:s.uploadId, parts, meta});
+      var res = await post("/klaar", {key:s.key, uploadId:s.uploadId, parts, meta});
     }
     $("doneemail").textContent = meta.email;
+    if (res && res.status) { $("statuslink").href = res.status; $("statuswrap").hidden = false; }
     $("formbody").style.display = "none"; $("done").classList.add("on");
   } catch (err) {
     msg(err.message, true); btn.disabled = false; btn.textContent = "Probeer opnieuw"; $("progress").classList.remove("on");
